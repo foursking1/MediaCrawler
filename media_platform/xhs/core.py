@@ -16,7 +16,7 @@ from var import crawler_type_var
 
 from .client import XiaoHongShuClient
 from .exception import DataFetchError
-from .field import SearchSortType
+from .field import SearchSortType, FeedType
 from .login import XiaoHongShuLogin
 
 
@@ -80,10 +80,54 @@ class XiaoHongShuCrawler(AbstractCrawler):
             elif config.CRAWLER_TYPE == "creator":
                 # Get creator's information and their notes and comments
                 await self.get_creators_and_notes()
+            elif config.CRAWLER_TYPE == "homefeed":
+                await self.homefeed()
             else:
                 pass
 
             utils.logger.info("[XiaoHongShuCrawler.start] Xhs Crawler finished ...")
+            
+    async def homefeed(self) -> None:
+        """Search for notes and retrieve their comment information."""
+        utils.logger.info("[XiaoHongShuCrawler.homefeed] Begin crawl xiaohongshu homefeed")
+        xhs_limit_count = 17  # xhs limit page fixed value
+        start_page = config.START_PAGE
+        for feed in FeedType:
+            
+            utils.logger.info(f"[XiaoHongShuCrawler.homefeed] Current home feed: {feed.name}")
+            page = 1
+            while (page - start_page + 1) * xhs_limit_count <= config.CRAWLER_MAX_NOTES_COUNT:
+                if page < start_page:
+                    utils.logger.info(f"[XiaoHongShuCrawler.homefeed] Skip page {page}")
+                    page += 1
+                    continue
+
+                try:
+                    utils.logger.info(f"[XiaoHongShuCrawler.homefeed] crawl xhs homefeed: {feed.name}, page: {page}")
+                    note_id_list: List[str] = []
+                    notes_res = await self.xhs_client.get_note_by_category(
+                        category=feed.value,
+                        page=page
+                    )
+                    utils.logger.info(f"[XiaoHongShuCrawler.homefeed] crawl notes res:{notes_res}")
+                    semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
+                    task_list = [
+                        self.get_note_detail(post_item.get("id"), semaphore)
+                        for post_item in notes_res.get("items", {})
+                        if post_item.get('model_type') not in ('rec_query', 'hot_query')
+                    ]
+                    note_details = await asyncio.gather(*task_list)
+                    for note_detail in note_details:
+                        if note_detail is not None:
+                            note_detail['feed_type'] = feed.name
+                            await xhs_store.update_xhs_note(note_detail)
+                            note_id_list.append(note_detail.get("note_id"))
+                    page += 1
+                    utils.logger.info(f"[XiaoHongShuCrawler.homefeed] Note details: {note_details}")
+                    await self.batch_get_note_comments(note_id_list)
+                except DataFetchError:
+                    utils.logger.error("[XiaoHongShuCrawler.homefeed] Get note detail error")
+                    break 
 
     async def search(self) -> None:
         """Search for notes and retrieve their comment information."""

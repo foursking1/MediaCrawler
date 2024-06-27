@@ -1,3 +1,9 @@
+'''
+Date: 2024-06-25 15:52:41
+LastEditors: foursking foursking@gmail.com
+LastEditTime: 2024-06-27 09:49:18
+FilePath: /MediaCrawler/cmd_arg/arg.py
+'''
 import argparse
 
 import config
@@ -11,8 +17,8 @@ async def parse_cmd():
                         choices=["xhs", "dy", "ks", "bili", "wb"], default=config.PLATFORM)
     parser.add_argument('--lt', type=str, help='Login type (qrcode | phone | cookie)',
                         choices=["qrcode", "phone", "cookie"], default=config.LOGIN_TYPE)
-    parser.add_argument('--type', type=str, help='crawler type (search | detail | creator)',
-                        choices=["search", "detail", "creator"], default=config.CRAWLER_TYPE)
+    parser.add_argument('--type', type=str, help='crawler type (search | detail | creator | homefeed)',
+                        choices=["search", "detail", "creator", "homefeed"], default=config.CRAWLER_TYPE)
     parser.add_argument('--start', type=int,
                         help='number of start page', default=config.START_PAGE)
     parser.add_argument('--keywords', type=str,

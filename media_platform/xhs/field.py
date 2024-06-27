@@ -1,3 +1,9 @@
+'''
+Date: 2024-06-25 15:52:41
+LastEditors: foursking foursking@gmail.com
+LastEditTime: 2024-06-27 13:59:58
+FilePath: /MediaCrawler/media_platform/xhs/field.py
+'''
 from enum import Enum
 from typing import NamedTuple
 

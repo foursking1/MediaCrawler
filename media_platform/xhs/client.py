@@ -160,6 +160,54 @@ class XiaoHongShuClient(AbstractApiClient):
         self.headers["Cookie"] = cookie_str
         self.cookie_dict = cookie_dict
 
+    async def get_note_by_category(
+            self, category: str,
+            page: int = 1, page_size: int = 17
+    ) -> Dict:
+        """
+        根据关键词搜索笔记
+        Args:
+            category: 类目参数
+            page: 分页第几页
+            page_size: 分页数据长度
+            sort: 搜索结果排序指定
+            note_type: 搜索的笔记类型
+
+        Returns:
+
+        """
+        uri = "/api/sns/web/v1/homefeed"
+        # data = {
+        #     "cursor_score": "",
+        #     "num": 40,
+        #     "refresh_type": 1,
+        #     "note_index": 0,
+        #     "unread_begin_note_id": "",
+        #     "unread_end_note_id": "",
+        #     "unread_note_count": 0,
+        #     "category": category,
+        #     "search_key": "",
+        #     "need_num": 40,
+        #     "image_scenes": ["FD_PRV_WEBP", "FD_WM_WEBP"]
+        # }
+        
+        data = {
+            "category": category,
+            "image_formats": ["jpg", "webp", "avif"],
+            "need_filter_image": False,
+            "need_num": 2,
+            "note_index": page * page_size,
+            "num": page_size,
+            "refresh_type": 3,
+            "search_key": "",
+            "unread_begin_note_id": "",
+            "unread_end_note_id": "",
+            "unread_note_count": 0
+        }
+        # print(data)
+        return await self.post(uri, data)    
+    
+
     async def get_note_by_keyword(
             self, keyword: str,
             page: int = 1, page_size: int = 20,
